@@ -2,6 +2,7 @@ import seleniumwire.undetected_chromedriver as uc
 from bs4 import BeautifulSoup
 from urllib.parse import quote
 import os
+import hashlib 
 
 # Global variables
 CUSTOM_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
@@ -44,7 +45,7 @@ def interceptor_resp(request, response):
             f"Request(application/json): {request.method} {request.url} {response.status_code}\n"
         )
         filename = f"{request.method}_{request.url}_{response.status_code}.txt".lower()
-        filename = filename.replace("://", "_").replace("/", "_")
+        filename = hashlib.md5(filename.encode()).hexdigest() 
         path = os.path.join(APPLICATION_JSON_DIR, filename)
         if not os.path.exists(path):
             with open(path, "w") as file:
