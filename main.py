@@ -3,7 +3,15 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote
 import os
 import hashlib 
+import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
+
+# Access environment variables
+LINK_FINDER_BIN = os.environ['LINK_FINDER_BIN']
+print(LINK_FINDER_BIN)
 # Global variables
 CUSTOM_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
 APPLICATION_JSON_DIR = "application-json"
