@@ -2,16 +2,16 @@ import seleniumwire.undetected_chromedriver as uc
 from bs4 import BeautifulSoup
 from urllib.parse import quote
 import os
-import hashlib 
+import hashlib
 import os
+import subprocess
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Access environment variables
-LINK_FINDER_BIN = os.environ['LINK_FINDER_BIN']
-print(LINK_FINDER_BIN)
+LINK_FINDER_BIN = os.environ["LINK_FINDER_BIN"]
 # Global variables
 CUSTOM_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
 APPLICATION_JSON_DIR = "application-json"
@@ -20,17 +20,23 @@ URLS_FILE = "urls.txt"
 TARGET_URL = input("Target url: ")
 KEY_WORD = input("Key word: ")
 
+if TARGET_URL == "test":
+    TARGET_URL = "http://testphp.vulnweb.com/"
+
+print(TARGET_URL)
+
 seleniumwire_options = {
     "proxy": {"https": "https://127.0.0.1:8080", "http": "http://127.0.0.1:8080"}
 }
 
-if not os.path.exists('analyzer'):
-    os.makedirs('analyzer')
+if not os.path.exists("analyzer"):
+    os.makedirs("analyzer")
 
 if not os.path.exists(APPLICATION_JSON_DIR):
     os.makedirs(APPLICATION_JSON_DIR)
 
-if not os.path.exists(INFO_DIR):
+URL_COLLECTOR_PATH_FULL = os.path.join(INFO_DIR, URLS_FILE)
+if not os.path.exists(URL_COLLECTOR_PATH_FULL):
     os.makedirs(INFO_DIR)
 
 
@@ -47,7 +53,7 @@ def configure_driver():
 
 def interceptor(request):
     del request.headers["user-agent"]
-    #request.headers["user-agent"] = CUSTOM_UA
+    # request.headers["user-agent"] = CUSTOM_UA
 
 
 def interceptor_resp(request, response):
@@ -56,7 +62,7 @@ def interceptor_resp(request, response):
             f"Request(application/json): {request.method} {request.url} {response.status_code}\n"
         )
         filename = f"{request.method}_{request.url}_{response.status_code}.txt".lower()
-        filename = hashlib.md5(filename.encode()).hexdigest() 
+        filename = hashlib.md5(filename.encode()).hexdigest()
         path = os.path.join(APPLICATION_JSON_DIR, filename)
         if not os.path.exists(path):
             with open(path, "w") as file:
@@ -89,34 +95,36 @@ def interceptor_resp(request, response):
                 file.write(f"{response.headers}\n")
                 file.write(f"{response.body}\n")
 
-
-def read_existing_urls(file_path):
-    existing_urls = set()
-    if os.path.exists(file_path):
-        with open(file_path, "r") as file:
-            existing_urls = set(file.read().splitlines())
-    return existing_urls
-
-
-def append_new_urls(file_path, urls, existing_urls):
-    filtered_urls = [url for url in urls if KEY_WORD in url or url.startswith("/")]
-    with open(file_path, "a") as file:
-        for url in filtered_urls:
-            if url not in existing_urls:
-                print(f"Adding new URL: {url}")
-                file.write(url + "\n")
-
-
 def extract_urls(driver):
-    path = os.path.join(INFO_DIR, URLS_FILE)
-    existing_urls = read_existing_urls(path)
     html_source = driver.page_source
     soup = BeautifulSoup(html_source, "html.parser")
-    with open('analyzer/page-source-code.html', 'w') as file:
+    with open("analyzer/page-source-code.txt", "w") as file:
+        file.write(html_source)
+    with open("analyzer/page-source-code-prettified.txt", "w") as file:
         file.write(soup.prettify())
-    hrefs = [a["href"] for a in soup.find_all("a", href=True)]
-    append_new_urls(path, hrefs, existing_urls)
-
+    command_1 = [
+        "python",
+        LINK_FINDER_BIN,
+        "-i",
+        f"{os.getcwd()}/analyzer/page-source-code.txt",
+        "-o",
+        "cli",
+    ]
+    # run command and capture output
+    process_1 = subprocess.Popen(command_1, stdout=subprocess.PIPE)
+    # Prepare the second command
+    command_2 = ["anew", f"{os.getcwd()}/{URL_COLLECTOR_PATH_FULL}"]
+    process_2 = subprocess.Popen(
+        command_2, stdin=process_1.stdout, stdout=subprocess.PIPE
+    )
+    output, _ = process_2.communicate()
+    # Print the output in the terminal
+    print("==================Urls extraction start================\n")
+    print(output.decode("utf-8"))
+    # wait for both processes to finish
+    process_1.wait()
+    process_2.wait()
+    print("==================Urls extraction complete================\n")
 
 driver = configure_driver()
 driver.request_interceptor = interceptor
