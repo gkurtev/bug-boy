@@ -1,3 +1,5 @@
 env/
+.env
 info/
 application-json/
+analyzer/

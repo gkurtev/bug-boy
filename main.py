@@ -16,6 +16,9 @@ seleniumwire_options = {
     "proxy": {"https": "https://127.0.0.1:8080", "http": "http://127.0.0.1:8080"}
 }
 
+if not os.path.exists('analyzer'):
+    os.makedirs('analyzer')
+
 if not os.path.exists(APPLICATION_JSON_DIR):
     os.makedirs(APPLICATION_JSON_DIR)
 
@@ -101,6 +104,8 @@ def extract_urls(driver):
     existing_urls = read_existing_urls(path)
     html_source = driver.page_source
     soup = BeautifulSoup(html_source, "html.parser")
+    with open('analyzer/page-source-code.html', 'w') as file:
+        file.write(soup.prettify())
     hrefs = [a["href"] for a in soup.find_all("a", href=True)]
     append_new_urls(path, hrefs, existing_urls)
 
