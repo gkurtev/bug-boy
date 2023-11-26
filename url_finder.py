@@ -89,21 +89,28 @@ def send_request(url):
 
     return data.decode('utf-8', 'replace')
 
-def cli_output(endpoints):
-    for endpoint in endpoints:
-        print(html.escape(endpoint["link"]).encode(
-            'ascii', 'ignore').decode('utf8'))
+def cli_output(endpoints, url_file_path):
+    with open(url_file_path, 'r') as file:
+        data = file.read().splitlines()
 
-def start(input):
+    with open(url_file_path, 'a') as file:
+        for endpoint in endpoints:
+            endpoint_formtted=html.escape(endpoint["link"]).encode('ascii', 'ignore').decode('utf8')
+            if endpoint_formtted not in data:
+                file.write(endpoint_formtted + "\n")
+                print(endpoint_formtted)
+
+def start(input, url_collector_file_path):
     try:
         file = send_request(input)
     except Exception as e:
         print('Error comming from {}'.format(e))
     
     endpoints = collect_endpoints(file, regex_str)
-    cli_output(endpoints)
+    cli_output(endpoints, url_collector_file_path)
 
 
 if __name__ == "__main__":
     path = "file://{}".format(os.path.abspath("analyzer/page-source-code.txt"))
-    start(path)
+    experimental_file =  'experiments-file.txt'
+    start(path,experimental_file)

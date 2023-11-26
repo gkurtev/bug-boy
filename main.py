@@ -36,7 +36,8 @@ if not os.path.exists(APPLICATION_JSON_DIR):
 
 URL_COLLECTOR_PATH_FULL = os.path.join(INFO_DIR, URLS_FILE)
 if not os.path.exists(URL_COLLECTOR_PATH_FULL):
-    os.makedirs(URL_COLLECTOR_PATH_FULL)
+    os.makedirs(INFO_DIR)
+    os.mknod(URL_COLLECTOR_PATH_FULL)
 
 
 def configure_driver():
@@ -103,7 +104,7 @@ def extract_urls(driver):
         file.write(soup.prettify())
     print("==================Urls extraction start================\n")
     path = "file://{}".format(os.path.abspath("analyzer/page-source-code.txt"))
-    start(path)
+    start(path, URL_COLLECTOR_PATH_FULL)
     print("==================Urls extraction end================\n")
 
 driver = configure_driver()
