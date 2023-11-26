@@ -1,5 +1,6 @@
 import seleniumwire.undetected_chromedriver as uc
 from bs4 import BeautifulSoup
+from url_finder import start
 from urllib.parse import quote
 import os
 import hashlib
@@ -10,8 +11,6 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Access environment variables
-LINK_FINDER_BIN = os.environ["LINK_FINDER_BIN"]
 # Global variables
 CUSTOM_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
 APPLICATION_JSON_DIR = "application-json"
@@ -37,7 +36,7 @@ if not os.path.exists(APPLICATION_JSON_DIR):
 
 URL_COLLECTOR_PATH_FULL = os.path.join(INFO_DIR, URLS_FILE)
 if not os.path.exists(URL_COLLECTOR_PATH_FULL):
-    os.makedirs(INFO_DIR)
+    os.makedirs(URL_COLLECTOR_PATH_FULL)
 
 
 def configure_driver():
@@ -102,29 +101,10 @@ def extract_urls(driver):
         file.write(html_source)
     with open("analyzer/page-source-code-prettified.txt", "w") as file:
         file.write(soup.prettify())
-    command_1 = [
-        "python",
-        LINK_FINDER_BIN,
-        "-i",
-        f"{os.getcwd()}/analyzer/page-source-code.txt",
-        "-o",
-        "cli",
-    ]
-    # run command and capture output
-    process_1 = subprocess.Popen(command_1, stdout=subprocess.PIPE)
-    # Prepare the second command
-    command_2 = ["anew", f"{os.getcwd()}/{URL_COLLECTOR_PATH_FULL}"]
-    process_2 = subprocess.Popen(
-        command_2, stdin=process_1.stdout, stdout=subprocess.PIPE
-    )
-    output, _ = process_2.communicate()
-    # Print the output in the terminal
     print("==================Urls extraction start================\n")
-    print(output.decode("utf-8"))
-    # wait for both processes to finish
-    process_1.wait()
-    process_2.wait()
-    print("==================Urls extraction complete================\n")
+    path = "file://{}".format(os.path.abspath("analyzer/page-source-code.txt"))
+    start(path)
+    print("==================Urls extraction end================\n")
 
 driver = configure_driver()
 driver.request_interceptor = interceptor

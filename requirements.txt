@@ -4,3 +4,4 @@ jsbeautifier
 selenium-wire
 setuptools
 python-dotenv
+pytest

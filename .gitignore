@@ -3,3 +3,4 @@ env/
 info/
 application-json/
 analyzer/
+__pycache__/
